@@ -43,14 +43,13 @@ pipeline {
                 echo "Starting temporary container on port ${TEST_PORT}..."
                 bat "docker run -d --name ${CONTAINER_NAME} -p ${TEST_PORT}:8080 ${IMAGE_NAME}:${IMAGE_TAG}"
                 
-                echo "Waiting for service to initialize..."
-                bat "timeout /t 5 /nobreak"
+                echo "Waiting 5 seconds for service to initialize..."
+                bat "ping 127.0.0.1 -n 6 > nul"
 
                 echo "Verifying application via /health endpoint..."
                 bat "curl --fail http://localhost:${TEST_PORT}/health"
             }
         }
-    }
 
     post {
         always {
