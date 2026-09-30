@@ -50,6 +50,7 @@ pipeline {
                 bat "curl --fail http://localhost:${TEST_PORT}/health"
             }
         }
+    }
 
     post {
         always {
