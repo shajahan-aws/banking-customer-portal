@@ -6,7 +6,6 @@ pipeline {
         IMAGE_TAG = "build-${BUILD_NUMBER}"
         CONTAINER_NAME = "temp-customer-portal-${BUILD_NUMBER}"
         TEST_PORT = '8081'
-        // Configure this ID in Jenkins -> Manage Jenkins -> Credentials
         GIT_CREDENTIALS_ID = 'git-repo-credentials'
     }
 
@@ -18,7 +17,7 @@ pipeline {
                     branches: [[name: '*/main']],
                     userRemoteConfigs: [[
                         credentialsId: "${GIT_CREDENTIALS_ID}",
-                        url: 'https://github.com/YOUR_USERNAME/banking-customer-portal.git'
+                        url: 'https://github.com/shajahan-aws/banking-customer-portal.git'
                     ]]
                 )
             }
@@ -26,49 +25,46 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo "Installing dependencies and preparing application build..."
-                sh 'npm install'
+                echo "Installing dependencies..."
+                bat 'npm install'
             }
         }
 
         stage('Test') {
             steps {
                 echo "Executing automated unit tests..."
-                // Pipeline will stop here if any test fails
-                sh 'npm test'
+                bat 'npm test'
             }
         }
 
         stage('Docker Build') {
             steps {
                 echo "Building Docker image: ${IMAGE_NAME}:${IMAGE_TAG}"
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                bat "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
         stage('Container Verification') {
             steps {
                 echo "Starting temporary container on port ${TEST_PORT}..."
-                sh "docker run -d --name ${CONTAINER_NAME} -p ${TEST_PORT}:8080 ${IMAGE_NAME}:${IMAGE_TAG}"
+                bat "docker run -d --name ${CONTAINER_NAME} -p ${TEST_PORT}:8080 ${IMAGE_NAME}:${IMAGE_TAG}"
                 
                 echo "Waiting for service to initialize..."
-                sleep 5
+                bat "timeout /t 5 /nobreak"
 
                 echo "Verifying application via /health endpoint..."
-                sh "curl --fail http://localhost:${TEST_PORT}/health"
+                bat "curl --fail http://localhost:${TEST_PORT}/health"
             }
         }
     }
 
     post {
         always {
-            stage('Cleanup') {
-                echo "Cleaning up temporary container..."
-                sh """
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                """
-            }
+            echo "Cleaning up temporary container..."
+            bat """
+                docker stop ${CONTAINER_NAME} || exit 0
+                docker rm ${CONTAINER_NAME} || exit 0
+            """
         }
         success {
             echo "Pipeline completed successfully! Image created: ${IMAGE_NAME}:${IMAGE_TAG}"
