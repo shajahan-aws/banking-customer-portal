@@ -2,24 +2,18 @@ pipeline {
     agent any
 
     environment {
+        PATH = "C:\\Program Files\\nodejs;C:\\Users\\Administrator\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin;${env.PATH}"
         IMAGE_NAME = 'customer-portal'
         IMAGE_TAG = "build-${BUILD_NUMBER}"
         CONTAINER_NAME = "temp-customer-portal-${BUILD_NUMBER}"
         TEST_PORT = '8081'
-        GIT_CREDENTIALS_ID = 'git-repo-credentials'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                echo "Checking out source code using Jenkins Credentials..."
-                checkout scmGit(
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[
-                        credentialsId: "${GIT_CREDENTIALS_ID}",
-                        url: 'https://github.com/shajahan-aws/banking-customer-portal.git'
-                    ]]
-                )
+                echo "Checking out source code..."
+                checkout scm
             }
         }
 
